@@ -1,0 +1,4 @@
+case,epochs,optimal,time_limit,search_mean_min_s,search_mean_max_s,ac_objective_difference_median_pct,ac_better_time_limited
+misocp_benchmark_ieee33_T1_scip,8,8,0,0.06348502333324481,0.0810419066666024,7.751627863434822,0
+misocp_benchmark_ieee33_T5_scip,8,3,5,0.2047662799998458,0.27043913666663383,3.8998533619005675,2
+misocp_benchmark_ieee69_T5_scip,8,0,8,0.47032744666648796,0.6132101333331472,-99.12344462899324,8

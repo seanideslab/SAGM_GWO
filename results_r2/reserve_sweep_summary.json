@@ -1,0 +1,26 @@
+{
+ "10%": {
+  "cum_ens_kwh": 2159.17,
+  "ens_crit_kwh": 0.0,
+  "switching_actions": 19.6,
+  "final_soc_mean": 0.3607713989936607,
+  "min_soc": 0.10209311550368445,
+  "fallback_epochs": 0.0
+ },
+ "20%": {
+  "cum_ens_kwh": 2247.8866666666663,
+  "ens_crit_kwh": 0.0,
+  "switching_actions": 21.466666666666665,
+  "final_soc_mean": 0.5564701754376319,
+  "min_soc": 0.22089382702144625,
+  "fallback_epochs": 0.0
+ },
+ "30%": {
+  "cum_ens_kwh": 2273.486666666666,
+  "ens_crit_kwh": 0.0,
+  "switching_actions": 21.866666666666667,
+  "final_soc_mean": 0.5865676666754089,
+  "min_soc": 0.3064749550202305,
+  "fallback_epochs": 0.0
+ }
+}

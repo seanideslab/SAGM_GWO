@@ -1,0 +1,13 @@
+{
+  "system": "IEEE69",
+  "horizon": 5,
+  "n_epochs": 240,
+  "mean_s": 0.5436076537500336,
+  "p5_s": 0.4595940949998294,
+  "median_s": 0.5187779999996565,
+  "p95_s": 0.7115380649994222,
+  "max_s": 1.2407292000007146,
+  "mean_evaluations": 722.9375,
+  "machine": "AMD64 Family 25 Model 116 Stepping 1, AuthenticAMD",
+  "python": "3.12.7"
+}

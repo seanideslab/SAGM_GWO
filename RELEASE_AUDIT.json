@@ -1,0 +1,21 @@
+{
+  "source_mismatches": [],
+  "checkpoint_counts": {
+    "runs_r2": 1080,
+    "supplement_runs": 120,
+    "development_runs": 19
+  },
+  "main_cases": 1080,
+  "phase_rows": 1440,
+  "benchmark_seed_files": 24,
+  "main_fallback_epochs": 1,
+  "main_configurations": 36,
+  "sensitivity_fallback_epochs": 0,
+  "phase_under_epochs_BR": 308,
+  "phase_under_epochs_PA": 93,
+  "phase_overload_epochs_each": 2,
+  "phase_net_pq_max_difference": 7.105427357601002e-15,
+  "misocp_cases": 24,
+  "search_seed_trials": 720,
+  "capa_included": false
+}

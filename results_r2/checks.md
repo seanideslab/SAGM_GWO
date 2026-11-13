@@ -1,0 +1,12 @@
+# Integrity checks (runs_r2)
+- OK   f2_25-29: hash ['f7559e2a90b8e70d']
+- OK   f2_27-28: hash ['4c8398dcaffdf182']
+- OK   main: hash ['264c75fa6507f972']
+- OK   severe: hash ['9fd4811ea3ce83fc']
+- OK   storage_rich: hash ['ca9be975bca0d373']
+- OK   switching_actions non-negative integers
+- OK   switching_reversals non-negative integers
+- OK   fallback_epochs non-negative integers
+- OK   overload_events non-negative integers
+- OK   soc_violations non-negative integers
+- OK   success binary

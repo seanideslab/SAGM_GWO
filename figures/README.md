@@ -1,0 +1,1 @@
+Fig. 2 follows Algorithm 1. PNG: 600 dpi; PDF/SVG: vector. Run python figures/draw_fig2.py from the repository root to regenerate the assets in outputs/. Requires matplotlib. Scientific experiment source and result files are unchanged. The released-state P/Q values, not candidate future flows, feed Eq. (9). Branch exchange reuses stages 4a–5.

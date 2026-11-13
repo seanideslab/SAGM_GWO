@@ -1,0 +1,7 @@
+PASS Python syntax for all supplied scripts.
+PASS main plan: 36 configurations.
+PASS full 24-epoch seed 1 via new checkpoint runner: ENS 2386.5 kWh.
+PASS completed checkpoint reused without rerun.
+PASS modified checkpoint rejected by SHA-256.
+PASS simulator core bytes unchanged from the corrected source package.
+Windows launcher and full SCIP batch remain to be run on the target computer.

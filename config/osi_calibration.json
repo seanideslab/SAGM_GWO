@@ -1,0 +1,42 @@
+{
+  "protocol": [
+    "Protocol (fixed before any performance comparison):",
+    "  * variant RH-FixedWeight (weights do not depend on c or tau, so the OSI trajectory it",
+    "    logs is independent of the parameters being calibrated);",
+    "  * calibration seeds 101-110 (disjoint from evaluation seeds 1-30), main scenario;",
+    "  * pool OSI_f over all epochs and seeds;",
+    "  * c   = median(OSI_f)",
+    "  * tau = 2 ln 9 / (P95 - P5)   -> the 10-90 % sigmoid transition spans the P5-P95 range.",
+    "Only the OSI distribution is inspected; no ENS or other performance metric is read."
+  ],
+  "seeds": [
+    101,
+    102,
+    103,
+    104,
+    105,
+    106,
+    107,
+    108,
+    109,
+    110
+  ],
+  "variant": "RH-FixedWeight",
+  "n_samples": 240,
+  "osi_f_p5": 0.19616553511849263,
+  "osi_f_p50": 0.23841383261040644,
+  "osi_f_p95": 0.33284914910002195,
+  "osi_f_min": 0.19320322864096456,
+  "osi_f_max": 0.3552854126884183,
+  "rho_p5_p50_p95": [
+    0.7110556422256891,
+    0.9769838327690743,
+    3.0283602576285498
+  ],
+  "c": 0.2384,
+  "tau": 32.151,
+  "manuscript_values": {
+    "c": 0.75,
+    "tau": 12.0
+  }
+}

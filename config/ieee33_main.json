@@ -1,0 +1,230 @@
+{
+  "_comment": "Frozen scenario for the R1 re-simulation. Fixed 2026-11-02 before any SAGM-GWO result was generated. Do not edit after runs start; the SHA-256 of this file is written into every run log.",
+  "system": "IEEE33",
+  "v_base_kv": 12.66,
+  "s_base_kva": 1000.0,
+  "v_min": 0.95,
+  "v_max": 1.05,
+  "thermal_main_amp": 300.0,
+  "thermal_lateral_amp": 200.0,
+  "main_trunk_branch_ids": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17
+  ],
+  "all_lines_switchable": true,
+  "window_steps": 24,
+  "dt_h": 1.0,
+  "start_hour": 8,
+  "load_profile_source": "IEEE RTS-79 winter weekday hourly load (% of daily peak), hour 0-23",
+  "load_profile": [
+    0.67,
+    0.63,
+    0.6,
+    0.59,
+    0.59,
+    0.6,
+    0.74,
+    0.86,
+    0.95,
+    0.96,
+    0.96,
+    0.95,
+    0.95,
+    0.95,
+    0.93,
+    0.94,
+    0.99,
+    1.0,
+    1.0,
+    0.96,
+    0.91,
+    0.83,
+    0.73,
+    0.63
+  ],
+  "pv_profile_rule": "clear-sky sin(pi*(h+0.5-6)/12) for 6<=h<18, else 0",
+  "critical_buses": [
+    14,
+    17
+  ],
+  "lambda_critical": 50.0,
+  "lambda_regular": 1.0,
+  "pv": {
+    "22": 120.0,
+    "26": 120.0
+  },
+  "dispatchable_dg": {
+    "8": 150.0,
+    "18": 150.0,
+    "33": 150.0
+  },
+  "bess": {
+    "buses": [
+      8,
+      18,
+      22,
+      26,
+      33
+    ],
+    "energy_kwh": 200.0,
+    "p_kw": 60.0,
+    "s_kva": 60.0,
+    "soc0": 0.6,
+    "soc_min": 0.1,
+    "soc_max": 0.95,
+    "soc_reserve": 0.2,
+    "eta": 0.95,
+    "grid_forming_buses": [
+      8,
+      18,
+      22,
+      26,
+      33
+    ],
+    "_note": "Merged R1/R2 decision 2026-11-02: 60 kW / 60 kVA per BESS (manuscript three-phase section) and all BESS grid-forming-capable when islanded. Grid-connected BESS provide Volt-VAR support from converter headroom."
+  },
+  "events": [
+    {
+      "id": "F1",
+      "t": 0,
+      "type": "fault",
+      "branch": "6-7"
+    },
+    {
+      "id": "D1",
+      "t": 2,
+      "type": "load_mult",
+      "buses": [
+        14,
+        17
+      ],
+      "mult": 1.4
+    },
+    {
+      "id": "R1",
+      "t": 3,
+      "type": "pv_mult",
+      "buses": [
+        22,
+        26
+      ],
+      "mult": 0.1
+    },
+    {
+      "id": "F2",
+      "t": 4,
+      "type": "fault",
+      "branch": "3-4"
+    },
+    {
+      "id": "D2",
+      "t": 6,
+      "type": "load_mult",
+      "buses": [
+        14,
+        17
+      ],
+      "mult": 1.0
+    }
+  ],
+  "horizon": 5,
+  "forecast": {
+    "error_pct": 10.0,
+    "sigma_rule": "sigma = error_pct/100/1.96",
+    "model": "white",
+    "ar1_rho": 0.8,
+    "persistence": "current measured deviation from nominal is persisted over the horizon"
+  },
+  "optimizer": {
+    "agents": 30,
+    "max_iter": 100,
+    "stagnation": 20,
+    "init_flip_prob": 0.1,
+    "local_search": "branch_exchange",
+    "ls_max_passes": 3,
+    "_local_search_note": "R1 search refinement declared 2026-11-02 before formal runs: Baran-Wu branch exchange on the GWO best (close one open switchable branch, open one switchable branch on the created loop; best-improvement per open branch; <= 3 passes). Verified on development seed 101 only.",
+    "reserve_projection": true,
+    "_reserve_projection_note": "R1 search refinement declared 2026-11-02 before formal runs: BESS set-points are projected so that, after each step k, stored energy >= max(E_min, E_res - (Tp-k-1)*P_rated*eta*dt); i.e. the terminal reserve stays reachable (forced charging when below). Applied in planning and in the plant. Verified on development seed 101 only."
+  },
+  "osi": {
+    "omega": [
+      0.45,
+      0.55
+    ],
+    "beta": 0.3,
+    "deadband": 0.02,
+    "c": 0.2384,
+    "tau": 32.151,
+    "alpha1_min": 0.3,
+    "alpha1_max": 0.85,
+    "pi": [
+      0.3333333333,
+      0.3333333333,
+      0.3333333334
+    ],
+    "feeder_limit_rule": "loadability: max total demand (forecast spatial pattern) the current topology serves within V and I limits",
+    "calibration": "config/osi_calibration.json (held-out seeds 101-110, RH-FixedWeight)"
+  },
+  "objective_refs": {
+    "energy_kwh": 100.0,
+    "vdi": 0.01,
+    "switching": 1.0,
+    "terminal_penalty_per_kwh": 10.0
+  },
+  "erb": {
+    "threshold": 0.85,
+    "lambda": 1.0,
+    "eta_min": 0.2,
+    "eta_max": 0.95,
+    "gamma": 2.0
+  },
+  "seeds": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30
+  ],
+  "bus_file": "ieee33_bus_data.csv",
+  "branch_file": "ieee33_branch_data.csv"
+}

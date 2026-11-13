@@ -1,0 +1,9 @@
+{
+  "main_cases": 1080,
+  "additional_sensitivity_cases": 120,
+  "main_plus_sensitivity_cases": 1200,
+  "phase_rows": 1440,
+  "capa_included": false,
+  "source_inputs_unchanged": true,
+  "finished": "2026-11-13 15:11:28"
+}
