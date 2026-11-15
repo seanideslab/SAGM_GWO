@@ -1,0 +1,22 @@
+{
+  "status": "passed",
+  "source_hashes_verified": 51,
+  "controller_runs": {
+    "runs_r2": 1080,
+    "supplement_runs": 120,
+    "development_runs": 19
+  },
+  "controller_epochs": 29256,
+  "fallback_epochs": 0,
+  "unsuccessful_runs": [
+    {
+      "file": "runs_r2/main/RH-Lean_w_o_graph_repair/seed_17.json",
+      "seed": 17,
+      "critical_ens_kwh": 79.8
+    }
+  ],
+  "phase_rows": 1440,
+  "misocp_cases": 24,
+  "benchmark_search_runs": 720,
+  "capa_included": false
+}

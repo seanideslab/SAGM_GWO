@@ -1,0 +1,200 @@
+{
+  "matched_runs": 1219,
+  "runs_with_changed_metrics": 798,
+  "missing": [],
+  "benchmark_state_log_missing": [],
+  "benchmarks": [
+    {
+      "system": "33",
+      "horizon": 1,
+      "t": 0,
+      "misocp_status": "OPTIMAL",
+      "misocp_in_sim_gate_pass": true,
+      "sagm_infeasible": 0
+    },
+    {
+      "system": "33",
+      "horizon": 1,
+      "t": 3,
+      "misocp_status": "OPTIMAL",
+      "misocp_in_sim_gate_pass": true,
+      "sagm_infeasible": 0
+    },
+    {
+      "system": "33",
+      "horizon": 1,
+      "t": 6,
+      "misocp_status": "OPTIMAL",
+      "misocp_in_sim_gate_pass": true,
+      "sagm_infeasible": 0
+    },
+    {
+      "system": "33",
+      "horizon": 1,
+      "t": 9,
+      "misocp_status": "OPTIMAL",
+      "misocp_in_sim_gate_pass": true,
+      "sagm_infeasible": 0
+    },
+    {
+      "system": "33",
+      "horizon": 1,
+      "t": 12,
+      "misocp_status": "OPTIMAL",
+      "misocp_in_sim_gate_pass": true,
+      "sagm_infeasible": 0
+    },
+    {
+      "system": "33",
+      "horizon": 1,
+      "t": 15,
+      "misocp_status": "OPTIMAL",
+      "misocp_in_sim_gate_pass": true,
+      "sagm_infeasible": 0
+    },
+    {
+      "system": "33",
+      "horizon": 1,
+      "t": 18,
+      "misocp_status": "OPTIMAL",
+      "misocp_in_sim_gate_pass": true,
+      "sagm_infeasible": 0
+    },
+    {
+      "system": "33",
+      "horizon": 1,
+      "t": 21,
+      "misocp_status": "OPTIMAL",
+      "misocp_in_sim_gate_pass": true,
+      "sagm_infeasible": 0
+    },
+    {
+      "system": "33",
+      "horizon": 5,
+      "t": 0,
+      "misocp_status": "TIMELIMIT",
+      "misocp_in_sim_gate_pass": true,
+      "sagm_infeasible": 0
+    },
+    {
+      "system": "33",
+      "horizon": 5,
+      "t": 3,
+      "misocp_status": "OPTIMAL",
+      "misocp_in_sim_gate_pass": true,
+      "sagm_infeasible": 0
+    },
+    {
+      "system": "33",
+      "horizon": 5,
+      "t": 6,
+      "misocp_status": "TIMELIMIT",
+      "misocp_in_sim_gate_pass": true,
+      "sagm_infeasible": 0
+    },
+    {
+      "system": "33",
+      "horizon": 5,
+      "t": 9,
+      "misocp_status": "TIMELIMIT",
+      "misocp_in_sim_gate_pass": true,
+      "sagm_infeasible": 0
+    },
+    {
+      "system": "33",
+      "horizon": 5,
+      "t": 12,
+      "misocp_status": "TIMELIMIT",
+      "misocp_in_sim_gate_pass": true,
+      "sagm_infeasible": 0
+    },
+    {
+      "system": "33",
+      "horizon": 5,
+      "t": 15,
+      "misocp_status": "OPTIMAL",
+      "misocp_in_sim_gate_pass": true,
+      "sagm_infeasible": 0
+    },
+    {
+      "system": "33",
+      "horizon": 5,
+      "t": 18,
+      "misocp_status": "OPTIMAL",
+      "misocp_in_sim_gate_pass": true,
+      "sagm_infeasible": 0
+    },
+    {
+      "system": "33",
+      "horizon": 5,
+      "t": 21,
+      "misocp_status": "TIMELIMIT",
+      "misocp_in_sim_gate_pass": true,
+      "sagm_infeasible": 0
+    },
+    {
+      "system": "69",
+      "horizon": 5,
+      "t": 0,
+      "misocp_status": "TIMELIMIT",
+      "misocp_in_sim_gate_pass": true,
+      "sagm_infeasible": 0
+    },
+    {
+      "system": "69",
+      "horizon": 5,
+      "t": 3,
+      "misocp_status": "TIMELIMIT",
+      "misocp_in_sim_gate_pass": true,
+      "sagm_infeasible": 0
+    },
+    {
+      "system": "69",
+      "horizon": 5,
+      "t": 6,
+      "misocp_status": "TIMELIMIT",
+      "misocp_in_sim_gate_pass": true,
+      "sagm_infeasible": 0
+    },
+    {
+      "system": "69",
+      "horizon": 5,
+      "t": 9,
+      "misocp_status": "TIMELIMIT",
+      "misocp_in_sim_gate_pass": true,
+      "sagm_infeasible": 0
+    },
+    {
+      "system": "69",
+      "horizon": 5,
+      "t": 12,
+      "misocp_status": "TIMELIMIT",
+      "misocp_in_sim_gate_pass": true,
+      "sagm_infeasible": 0
+    },
+    {
+      "system": "69",
+      "horizon": 5,
+      "t": 15,
+      "misocp_status": "TIMELIMIT",
+      "misocp_in_sim_gate_pass": true,
+      "sagm_infeasible": 0
+    },
+    {
+      "system": "69",
+      "horizon": 5,
+      "t": 18,
+      "misocp_status": "TIMELIMIT",
+      "misocp_in_sim_gate_pass": true,
+      "sagm_infeasible": 0
+    },
+    {
+      "system": "69",
+      "horizon": 5,
+      "t": 21,
+      "misocp_status": "TIMELIMIT",
+      "misocp_in_sim_gate_pass": true,
+      "sagm_infeasible": 0
+    }
+  ]
+}

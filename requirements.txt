@@ -1,8 +1,18 @@
-numpy>=1.23
-pandas>=1.5
-scipy>=1.10
-numba>=0.58
-matplotlib>=3.7
-tabulate>=0.9
-pyscipopt>=5.0      # MISOCP reference (open-source SCIP)
-# gurobipy>=11.0    # optional: faster MISOCP with a full academic licence (--solver gurobi)
+# Pinned to the archived Windows Python 3.12 study environment.
+contourpy==1.4.0
+cycler==0.12.1
+fonttools==4.68.0
+kiwisolver==1.5.1
+llvmlite==0.50.0
+matplotlib==3.11.2
+numba==0.68.1
+numpy==2.5.4
+packaging==26.3
+pandas==3.1.1
+pillow==13.0.0
+pyparsing==3.3.3
+PySCIPOpt==6.3.0
+python-dateutil==4.0.0
+scipy==1.18.1
+tabulate==0.10.0
+tzdata==2026.6

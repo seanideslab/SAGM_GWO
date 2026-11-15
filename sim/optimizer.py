@@ -50,9 +50,16 @@ class GWOParams:
 
 
 def rank_value(J, m):
-    """Feasibility-first ranking: structural infeasibility, then terminal-reserve deficit, then J."""
+    """Reject residual physical violations, then rank admissible plans by J."""
+    if not np.isfinite(J) or not np.all(np.isfinite(m)):
+        return 1e9
     if m[core.M_STRUCT_INF] > 0:
         return 1e9
+    if any(m[i] > 0 for i in (core.M_FINAL_NONCONV, core.M_VVIOL,
+                              core.M_OVERLOAD, core.M_SOCVIOL, core.M_BESSVIOL)):
+        return 1e8
+    if m[core.M_RESERVE_STEP] > 0:
+        return 1e6 + max(float(m[core.M_TERM]), 1.0)
     if m[core.M_TERM] > 1e-6:
         return 1e6 + m[core.M_TERM]
     return J

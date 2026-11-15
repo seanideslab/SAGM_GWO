@@ -18,7 +18,7 @@
   "soc_violations": 0,
   "success": 1,
   "mean_iterations": 20.0,
-  "mean_epoch_runtime_s": 0.07143754166672049,
+  "mean_epoch_runtime_s": 0.07537656666667658,
   "raw_candidate_admissible_frac": 0.011838624338624338,
   "final_soc_mean": 0.3111849863024543,
   "var_mode": "rh",
@@ -35,7 +35,7 @@
   "var_local_search": true,
   "var_bias": 0.0,
   "scenario": "main",
-  "wall_s": 1.7165781000003335,
+  "wall_s": 1.811217700000043,
   "min_soc": 0.2,
-  "_csv_sha256": "895d52074f8c207a8d4d0bb8b69e1d3f53c133d98978fbd6118dc32f69ff00d5"
+  "_csv_sha256": "1e37040d019adb0db18c300134e974e0eba98cb02f5df09d087a7429e94b68ab"
 }

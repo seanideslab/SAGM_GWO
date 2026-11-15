@@ -9,8 +9,8 @@
   "rda_percent_day": 0.0,
   "switching_actions": 12,
   "switching_reversals": 2,
-  "average_vdi_pu": 0.023630519109788823,
-  "avg_power_loss_kw": 73.5159182280547,
+  "average_vdi_pu": 0.023569668637324594,
+  "avg_power_loss_kw": 73.46860585496228,
   "min_v_pu": 0.9500637390484657,
   "max_loading_ratio": 0.6053863441065898,
   "overload_events": 0,
@@ -18,9 +18,9 @@
   "soc_violations": 0,
   "success": 1,
   "mean_iterations": 20.0,
-  "mean_epoch_runtime_s": 0.22424791249985296,
+  "mean_epoch_runtime_s": 0.2312766791666263,
   "raw_candidate_admissible_frac": 0.012037037037037035,
-  "final_soc_mean": 0.4495702693932258,
+  "final_soc_mean": 0.3792899715110591,
   "var_mode": "rh",
   "var_horizon": 5,
   "var_adaptive": false,
@@ -35,7 +35,7 @@
   "var_local_search": true,
   "var_bias": 0.0,
   "scenario": "f2_27-28",
-  "wall_s": 5.384076599999389,
+  "wall_s": 5.552925200000573,
   "min_soc": 0.2,
-  "_csv_sha256": "1fbfb245465a3c02e32829a9fff99915c0a0709dd1d2f95d53204603518ff4c9"
+  "_csv_sha256": "ccca8cb0ca5116b3ef4e5be83be344f24a9180cb7c869c434f4b937fc013b047"
 }

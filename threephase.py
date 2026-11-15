@@ -33,8 +33,10 @@ VMIN = 0.95
 
 
 class CaptureEpisode(Episode):
-    def plant(self, closed, u0, t, soc, cur_state):
-        m, out = super().plant(closed, u0, t, soc, cur_state)
+    def plant(self, closed, u0, t, soc, cur_state, repair=True):
+        m, out = super().plant(closed, u0, t, soc, cur_state, repair=repair)
+        if self.cap and self.cap[-1]["t"] == t:
+            self.cap.pop()  # a fallback re-evaluation replaces the failed trial
         self.cap.append(dict(t=t, aux=self.ev.out_aux0.copy(), closed=out["closed"].copy(),
                              served=out["served"].copy(), V=out["V"].copy()))
         return m, out
@@ -212,7 +214,9 @@ def run_seed(seed):
     ep = CaptureEpisode(net, tr, Variant("RH-Lean", adaptive=False, erb=False, v_aware=False), seed)
     rows = ep.run()
     out = []
+    assert len(ep.cap) == len(rows) == 24
     for cap, row in zip(ep.cap, rows):
+        assert cap["t"] == row["t"]
         t = cap["t"]
         Dz, root, alive = tree_matrix(net, cap["closed"], tr.avail[t], cap["aux"])
         bal_vmin = cap["V"][alive].min() if alive.any() else np.nan

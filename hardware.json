@@ -1,9 +1,10 @@
-{
-  "CPU": "AMD Ryzen 7 7840HS w/ Radeon 780M Graphics     ",
-  "Cores": 8,
-  "LogicalProcessors": 16,
-  "InstalledRAM_GiB": 32,
-  "OSVisibleRAM_GiB": 31.19,
-  "OS": "Microsoft Windows 11 \u5c08\u696d\u7248",
-  "OSVersion": "10.0.22631"
+﻿{
+    "CPU":  "AMD Ryzen 7 7840HS w/ Radeon 780M Graphics     ",
+    "Cores":  8,
+    "LogicalProcessors":  16,
+    "InstalledRAM_GiB":  32,
+    "OSVisibleRAM_GiB":  31.19,
+    "OS":  "Microsoft Windows 11 專業版",
+    "OSVersion":  "10.0.22631",
+    "ComputerName":  "CJCU-6154-1"
 }

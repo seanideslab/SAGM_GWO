@@ -16,7 +16,17 @@ from numba import njit
 # metrics layout
 M_PENS, M_ENS, M_ENSC, M_LOSS, M_VDI, M_NSW, M_TERM, M_RAWCYC, M_RAWADM, M_VMIN, \
     M_NSHED, M_NCURT, M_NONCONV, M_OVERLOAD, M_STRUCT_INF, M_DEEN, M_SOCVIOL, M_IMAXR = range(18)
-N_METRICS = 18
+# Residual checks refer to the final solve of each horizon step, not intermediate attempts.
+M_FINAL_NONCONV, M_VVIOL, M_BESSVIOL, M_RESERVE_STEP, M_VMAX = range(18, 23)
+N_METRICS = 23
+
+
+@njit(cache=True)
+def reserve_power_ceiling(energy, floor, eta, dt):
+    """Signed AC power ceiling: positive discharges, negative requires charging."""
+    if energy >= floor:
+        return (energy - floor) * eta / dt
+    return (energy - floor) / (eta * dt)
 
 
 @njit(cache=True)
@@ -203,7 +213,7 @@ def evaluate(closed_in, u, w, do_repair, cur_state,
         for bi in range(nbs):
             g = bess_bus[bi]
             p = u[bi, k] * bess_p[bi] if energized[g] else 0.0
-            dmax = (E[bi] - efloor[bi]) * eta[bi] / dt           # may be negative -> forced charging
+            dmax = reserve_power_ceiling(E[bi], efloor[bi], eta[bi], dt)           # may be negative -> forced charging
             cmax = max(0.0, (soc_max[bi] * bess_cap[bi] - E[bi]) / (eta[bi] * dt))
             dmax = min(dmax, bess_p[bi])
             if energized[g] and project_reserve:
@@ -220,7 +230,7 @@ def evaluate(closed_in, u, w, do_repair, cur_state,
             if slack_of_root[bess_bus[bi]] == bi:
                 pb[bi] = 0.0
         for it in range(nb + 40):
-            # Grid-connected dispatchable DG: fixed power-factor mode, pf 0.9 (Q = 0.44*P_out),
+            # Grid-connected dispatchable DG: fixed Q/P = 0.44 (power factor approximately 0.9153),
             # IEEE Std 1547-2018 constant-pf mode. Islanded DG share the island reactive demand up to
             # 0.44*P_cap; the grid-forming BESS supplies the residual. PV inverters run at unity pf.
             for i in range(nb):
@@ -313,7 +323,7 @@ def evaluate(closed_in, u, w, do_repair, cur_state,
                     ps = (V[i] * J[i].conjugate()).real * sb      # kW the GFM BESS must supply
                     qs = (V[i] * J[i].conjugate()).imag * sb
                     if project_reserve:
-                        dmax = min(bess_p[bi], (E[bi] - efloor[bi]) * eta[bi] / dt)
+                        dmax = min(bess_p[bi], reserve_power_ceiling(E[bi], efloor[bi], eta[bi], dt))
                     else:
                         dmax = max(0.0, min(bess_p[bi], (E[bi] - soc_min[bi] * bess_cap[bi]) * eta[bi] / dt))
                     cmax = max(0.0, min(bess_p[bi], (soc_max[bi] * bess_cap[bi] - E[bi]) / (eta[bi] * dt)))
@@ -416,6 +426,16 @@ def evaluate(closed_in, u, w, do_repair, cur_state,
                 continue
             served[cand] = False
             metrics[M_NSHED] += 1.0
+        # Verify the final electrical state after all corrective attempts.
+        if not conv:
+            metrics[M_FINAL_NONCONV] += 1.0
+        for q in range(n_ord):
+            i = order[q]
+            if alive[i]:
+                vm = abs(V[i])
+                metrics[M_VMAX] = max(metrics[M_VMAX], vm)
+                if not math.isfinite(vm) or vm < vmin - 1e-9 or vm > vmax + 1e-9:
+                    metrics[M_VVIOL] += 1.0
         # ---- step accounting
         ens = 0.0; pens = 0.0; ensc = 0.0; loss = 0.0; vd = 0.0; nen = 0
         for i in range(nb):
@@ -446,12 +466,20 @@ def evaluate(closed_in, u, w, do_repair, cur_state,
             if slack_of_root[g] == bi and alive[g]:
                 pb[bi] = (V[g] * J[g].conjugate()).real * sb
             p = pb[bi]
+            qb = 0.0
+            if alive[g]:
+                qb = (V[g] * J[g].conjugate()).imag * sb if slack_of_root[g] == bi else qvv[g]
+            if (not math.isfinite(p) or not math.isfinite(qb) or
+                    abs(p) > bess_p[bi] + 1e-6 or p*p + qb*qb > bess_s[bi]**2 + 1e-5):
+                metrics[M_BESSVIOL] += 1.0
             if p >= 0:
                 E[bi] -= p / eta[bi] * dt
             else:
                 E[bi] += -p * eta[bi] * dt
             if E[bi] < soc_min[bi] * bess_cap[bi] - 1e-6 or E[bi] > soc_max[bi] * bess_cap[bi] + 1e-6:
                 metrics[M_SOCVIOL] += 1.0
+            if project_reserve and E[bi] < efloor[bi] - 1e-6:
+                metrics[M_RESERVE_STEP] += 1.0
             E[bi] = min(max(E[bi], 0.0), bess_cap[bi])
         if k == 0:
             for i in range(nb):

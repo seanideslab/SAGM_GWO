@@ -27,6 +27,7 @@ from __future__ import annotations
 import argparse
 import dataclasses
 import json
+import os
 import sys
 import time
 from pathlib import Path
@@ -44,6 +45,14 @@ from sim.optimizer import rank_value, search                        # noqa: E402
 
 CFG = {"33": ROOT / "config/ieee33_main.json", "69": ROOT / "config/ieee69_timing.json"}
 EPOCHS = list(range(0, 24, 3))
+
+
+def atomic_text(path, text):
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temp = path.with_suffix(path.suffix + '.tmp')
+    temp.write_text(text, encoding='utf-8')
+    os.replace(temp, path)
 
 
 def misocp_case(net, tr, t):
@@ -119,7 +128,10 @@ def run_epoch(args):
     scn = bm.Scenario(faulted={e + 1 for e in range(net.nl) if not avail_h[e]}, load_mult=lm,
                       dg_mult=[{}] * T, soc0=case.bess_soc0, x_prev={e + 1: int(state[e]) for e in range(net.nl)},
                       pv_kw_t=pvt)
+    print(f"BENCHMARK IEEE{system} Tp={T} t={t}: SCIP START (limit {time_limit:.0f}s)", flush=True)
     r = bm.solve(case, prm, scn, False, a.solver)
+    print(f"BENCHMARK IEEE{system} Tp={T} t={t}: SCIP {r['status']}", flush=True)
+    atomic_text(Path(part).with_suffix('.solver.json'), json.dumps(r, default=lambda x: x.tolist() if hasattr(x,'tolist') else str(x)))
     row = dict(system=a.system, horizon=T, t=t, misocp_solver=a.solver, misocp_status=r["status"],
                misocp_runtime_s=r["runtime_s"], misocp_mip_gap=r.get("mip_gap"), misocp_J=r.get("objective"), misocp_bound=r.get("bound"),
                misocp_vars=r.get("n_vars"))
@@ -131,7 +143,8 @@ def run_epoch(args):
                         for g in net.bess_bus])
         m = ep.ev(closed_m, u_m, np.zeros(net.nl), True, state, avail_h, pdh, qdh, pvh, soc)
         row.update(misocp_in_sim_J=J_of(alpha, m), misocp_in_sim_ens=float(m[core.M_ENS]),
-                   misocp_in_sim_term_deficit=float(m[core.M_TERM]))
+                   misocp_in_sim_term_deficit=float(m[core.M_TERM]),
+                   misocp_in_sim_gate_pass=bool(rank_value(J_of(alpha,m),m)<1e6))
     # ---------------- SAGM-GWO (same horizon, perfect information)
     ep.ev(state, np.zeros((net.bess_bus.size, 1)), np.zeros(net.nl), True, state, avail,
           tr.pd[t:t + 1], tr.qd[t:t + 1], tr.pv[t:t + 1], soc)
@@ -141,6 +154,7 @@ def run_epoch(args):
     Js, ens, rt = [], [], []
     seed_records = []
     for sd in range(1, a.sagm_seeds + 1):
+        print(f"BENCHMARK IEEE{system} Tp={T} t={t}: SAGM {sd}/{a.sagm_seeds}",flush=True)
         def fitness(bits, U):
             m = ep.ev(bits, U, w, True, state, avail_h, pdh, qdh, pvh, soc)
             return rank_value(J_of(alpha, m), m), J_of(alpha, m), m.copy(), ep.ev.out_closed.copy()
@@ -151,18 +165,19 @@ def run_epoch(args):
         rt.append(time.perf_counter() - t0); Js.append(best[1] if best[0] < 1e6 else np.nan)
         ens.append(best[2][core.M_ENS])
         seed_records.append(dict(system=system,horizon=T,t=t,seed=sd,rank=float(best[0]),J=float(best[1]),ens=float(best[2][core.M_ENS]),search_runtime_s=rt[-1]))
-    pd.DataFrame(seed_records).to_csv(Path(part).with_suffix(".sagm_seeds.csv"),index=False)
-    row.update(sagm_ls=gwo.local_search, sagm_J_mean=np.nanmean(Js), sagm_J_sd=np.nanstd(Js, ddof=1),
-               sagm_J_best=np.nanmin(Js), sagm_infeasible=int(np.isnan(Js).sum()),
+    atomic_text(Path(part).with_suffix(".sagm_seeds.csv"), pd.DataFrame(seed_records).to_csv(index=False))
+    valid_J = np.asarray(Js)[np.isfinite(Js)]
+    row.update(sagm_ls=gwo.local_search, sagm_J_mean=float(valid_J.mean()) if len(valid_J) else None,
+               sagm_J_sd=float(valid_J.std(ddof=1)) if len(valid_J)>1 else None,
+               sagm_J_best=float(valid_J.min()) if len(valid_J) else None, sagm_infeasible=int(np.isnan(Js).sum()),
                sagm_ens_mean=np.mean(ens), sagm_runtime_s=np.mean(rt))
-    if row.get("misocp_J"):
+    if row.get("misocp_J") and row["sagm_J_mean"] is not None:
         row["gap_mean_pct"] = 100 * (row["sagm_J_mean"] - row["misocp_J"]) / max(abs(row["misocp_J"]), 1e-9)
-    if row.get("misocp_bound") is not None:
+    if row.get("misocp_bound") is not None and row["sagm_J_mean"] is not None:
         row["gap_to_bound_pct"] = 100 * (row["sagm_J_mean"] - row["misocp_bound"]) / max(abs(row["sagm_J_mean"]), 1e-9)
-    if row.get("misocp_in_sim_J"):
+    if row.get("misocp_in_sim_J") and row["sagm_J_mean"] is not None:
         row["gap_vs_misocp_in_sim_pct"] = 100 * (row["sagm_J_mean"] - row["misocp_in_sim_J"]) / max(abs(row["misocp_in_sim_J"]), 1e-9)
-    print(json.dumps({k: (round(v, 4) if isinstance(v, float) else v) for k, v in row.items()}), flush=True)
-    Path(part).write_text(json.dumps(row, default=float))
+    atomic_text(part, json.dumps(row, default=float))
     print(json.dumps({k: (round(v, 4) if isinstance(v, float) else v) for k, v in row.items()}), flush=True)
     return row
 
@@ -189,7 +204,7 @@ def main():
     if not logp.exists():
         print(f"generating state log {logp} (RH-Lean, seed 1)", flush=True)
         rows = Episode(net, tr, Variant("RH-Lean", **LEAN), 1).run()
-        logp.parent.mkdir(parents=True, exist_ok=True); pd.DataFrame(rows).to_csv(logp, index=False)
+        logp.parent.mkdir(parents=True, exist_ok=True); atomic_text(logp, pd.DataFrame(rows).to_csv(index=False))
     name = f"misocp_benchmark_ieee{a.system}_T{T}_{a.solver}{'_nols' if a.no_ls else ''}{a.tag}"
     parts = ROOT / "results_r2" / "bench_parts"; parts.mkdir(parents=True, exist_ok=True)
     epochs = [int(v) for v in a.epochs.split(",")]

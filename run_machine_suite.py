@@ -14,6 +14,11 @@ from run_experiments import lean_suite, SCEN, slug
 RESULT = ROOT / "results_r2"
 CONTROL = ROOT / "rerun_control"
 LEAN = dict(adaptive=False, erb=False, v_aware=False)
+ACTIVE = {"stage": "starting", "started": time.monotonic()}
+COUNTS = {"completed": 0, "total": 1219}
+def status(label):
+    ACTIVE.update(stage=label, started=time.monotonic())
+    print(f"[{time.strftime('%H:%M:%S')}] {label}", flush=True)
 
 def atomic(path, text):
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -22,7 +27,7 @@ def atomic(path, text):
     os.replace(tmp, path)
 
 def source_hashes():
-    files = list(ROOT.glob("*.py")) + list((ROOT/"sim").glob("*.py")) + list((ROOT/"config").glob("*.json")) + list((ROOT/"data").glob("*.csv"))
+    files = list(ROOT.glob("*.py")) + list((ROOT/"sim").glob("*.py")) + list((ROOT/"tests").glob("*.py")) + list((ROOT/"config").glob("*.json")) + list((ROOT/"data").glob("*.csv"))
     return {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(files)}
 
 def warm():
@@ -39,9 +44,10 @@ def cached_run(folder, seed, net, var, scenario, extra=None):
         assert int(s["seed"]) == seed and len(d) == net.cfg["window_steps"]
         assert list(d.t.astype(int)) == list(range(net.cfg["window_steps"]))
         assert s["_csv_sha256"] == hashlib.sha256(csv.read_bytes()).hexdigest()
+        COUNTS["completed"] += 1
         print(f"SKIP {scenario} {var.name} seed={seed}", flush=True)
         return s
-    print(f"START {scenario} {var.name} seed={seed}", flush=True)
+    status(f"RUN {COUNTS['completed']+1}/{COUNTS['total']} {scenario} {var.name} seed={seed}")
     t0 = time.perf_counter()
     rows = Episode(net, build_truth(net), var, seed).run()
     d = pd.DataFrame(rows)
@@ -53,11 +59,12 @@ def cached_run(folder, seed, net, var, scenario, extra=None):
     s["_csv_sha256"] = hashlib.sha256(csv.read_bytes()).hexdigest()
     atomic(js, json.dumps(s, indent=2, default=float))
     atomic(CONTROL/"progress.json", json.dumps(dict(last_complete=str(js.relative_to(ROOT)),updated=time.strftime("%Y-%m-%d %H:%M:%S"))))
+    COUNTS["completed"] += 1
     print(f"DONE {scenario} {var.name} seed={seed} ENS={s['cum_ens_kwh']:.3f} wall={s['wall_s']:.1f}s", flush=True)
     return s
 
 def command(*args):
-    print("RUN", " ".join(args), flush=True)
+    status("COMMAND " + " ".join(args))
     subprocess.run([sys.executable,"-u",*args],check=True,cwd=ROOT)
 
 def analysis_step(name, *args):
@@ -69,7 +76,8 @@ def analysis_step(name, *args):
 def heartbeat():
     while True:
         time.sleep(60)
-        print("HEARTBEAT: process alive; current seed may still be computing.",flush=True)
+        elapsed=time.monotonic()-ACTIVE["started"]
+        print(f"[{time.strftime('%H:%M:%S')}] {ACTIVE['stage']} | elapsed {elapsed/60:.1f} min | runs {COUNTS['completed']}/{COUNTS['total']}",flush=True)
 
 def preflight():
     import scipy, numba, matplotlib, tabulate, pyscipopt
@@ -85,8 +93,8 @@ def preflight():
     hwpath=ROOT/"hardware.json"
     if not hwpath.exists():raise RuntimeError("Run RUN_ALL.cmd to capture hardware.json first.")
     hw=json.loads(hwpath.read_text(encoding="utf-8-sig"))
-    assert "7840HS" in hw["CPU"], "Unexpected CPU; do not mix machines in this output folder."
-    assert abs(float(hw["InstalledRAM_GiB"])-32)<1, "Expected installed RAM = 32 GiB."
+    # New output folders may use other CPUs; resume still checks exact recorded hardware.
+    assert float(hw["InstalledRAM_GiB"]) > 0, "Invalid memory metadata."
     info=dict(hardware=hw,python=sys.version,platform=platform.platform(),source_hashes=source_hashes(),
               packages=subprocess.check_output([sys.executable,"-m","pip","freeze"],text=True),
               timing="Serial; one active experiment; BLAS/OpenMP/Numba threads=1; warmup excluded",
@@ -99,11 +107,12 @@ def preflight():
     else:atomic(path,json.dumps(info,indent=2))
     print("Compatibility, solver and provenance checks passed.",flush=True)
 
-def run_all():
+def run_all(skip_misocp=False):
     RESULT.mkdir(exist_ok=True)
     preflight()
     analysis_step("validation","tests/test_validation.py")
     analysis_step("counter_validation","tests/test_counter_separation.py")
+    analysis_step("repair_validation","tests/test_repair.py")
     warm()
     # The entire main suite is serial so its epoch timings are uncontended.
     main=[]
@@ -167,7 +176,7 @@ def run_all():
         path=ROOT/"phase_runs"/f"seed_{seed:02d}.csv"
         if path.exists():d=pd.read_csv(path)
         else:
-            print(f"START BR/PA seed={seed}",flush=True)
+            status(f"BR/PA {seed}/30")
             d=pd.DataFrame(threephase.run_seed(seed))
             atomic(path,d.to_csv(index=False))
         assert len(d)==48 and d.groupby("config").size().to_dict()=={"BR":24,"PA":24}
@@ -180,13 +189,14 @@ def run_all():
     analysis_step("phase_analysis","analyze_3ph.py")
     analysis_step("timing69","timing_ieee69.py","--seeds","1-10")
     # SCIP comparisons run one epoch at a time, with identical 1800-s caps.
-    for system,horizon in (("33",1),("33",5),("69",5)):
+    for system,horizon in (() if skip_misocp else (("33",1),("33",5),("69",5))):
         analysis_step(f"bench{system}_{horizon}","benchmark_epochs.py","--system",system,
             "--horizon",str(horizon),"--solver","scip","--workers","1","--time-limit","1800","--sagm-seeds","30")
+    command("summarize_repair.py")
     assert source_hashes()==json.loads((CONTROL/"manifest.json").read_text())["source_hashes"]
-    atomic(CONTROL/"COMPLETE.json",json.dumps(dict(main_cases=1080,additional_sensitivity_cases=120,
+    atomic(CONTROL/("CONTROLLERS_COMPLETE.json" if skip_misocp else "COMPLETE.json"),json.dumps(dict(main_cases=1080,additional_sensitivity_cases=120,
         main_plus_sensitivity_cases=1200,phase_rows=1440,capa_included=False,
-        source_inputs_unchanged=True,finished=time.strftime("%Y-%m-%d %H:%M:%S")),indent=2))
+        benchmarks_complete=not skip_misocp,source_inputs_unchanged=True,finished=time.strftime("%Y-%m-%d %H:%M:%S")),indent=2))
     pack=ROOT/"SAGM_GWO_4050_RESULTS.zip"
     with zipfile.ZipFile(pack,"w",zipfile.ZIP_DEFLATED) as z:
         for folder in ("runs_r2","supplement_runs","development_runs","phase_runs","results_r2","results_3ph","rerun_control"):
@@ -194,11 +204,11 @@ def run_all():
                 if p.is_file() and p.name!="active.lock":z.write(p,p.relative_to(ROOT))
         z.write(ROOT/"hardware.json","hardware.json")
         for p in ROOT.glob("console_*.txt"):z.write(p,p.name)
-    print(f"ALL COMPLETE: {pack}",flush=True)
+    print(f"{'CONTROLLERS COMPLETE; run RUN_ALL.cmd to finish benchmarks' if skip_misocp else 'ALL COMPLETE'}: {pack}",flush=True)
 
 if __name__=="__main__":
     ap=argparse.ArgumentParser();ap.add_argument("--check-only",action="store_true")
-    ap.add_argument("--plan",action="store_true");a=ap.parse_args()
+    ap.add_argument("--plan",action="store_true");ap.add_argument("--skip-misocp",action="store_true");a=ap.parse_args()
     if a.plan:
         print(f"Main: {len(lean_suite())} x 30 = 1080; sensitivity: +120; development: 19; BR/PA: 30 seeds; IEEE69: 10 seeds; MISOCP: 24 epochs.");sys.exit()
     CONTROL.mkdir(exist_ok=True)
@@ -210,5 +220,5 @@ if __name__=="__main__":
         if a.check_only:preflight()
         else:
             threading.Thread(target=heartbeat,daemon=True).start()
-            run_all()
+            run_all(skip_misocp=a.skip_misocp)
     finally:lock.seek(0);msvcrt.locking(lock.fileno(),msvcrt.LK_UNLCK,1);lock.close()

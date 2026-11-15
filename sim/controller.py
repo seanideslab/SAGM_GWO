@@ -72,9 +72,9 @@ class Episode:
         self.Eref, self.Vref, self.Sref = r["energy_kwh"], r["vdi"], r["switching"]
 
     # ------------------------------------------------------------------ helpers
-    def plant(self, closed, u0, t, soc, cur_state):
+    def plant(self, closed, u0, t, soc, cur_state, repair=True):
         n, tr = self.net, self.tr
-        m = self.ev(closed, u0.reshape(-1, 1), np.zeros(n.nl), True, cur_state, tr.avail[t],
+        m = self.ev(closed, u0.reshape(-1, 1), np.zeros(n.nl), repair, cur_state, tr.avail[t],
                     tr.pd[t:t + 1], tr.qd[t:t + 1], tr.pv[t:t + 1], soc).copy()
         out = dict(closed=self.ev.out_closed.copy(), served=self.ev.out_served0.copy(), V=self.ev.out_V0.copy(),
                    P=self.ev.out_P0.copy(), Q=self.ev.out_Q0.copy(), I=self.ev.out_I0.copy(),
@@ -214,7 +214,14 @@ class Episode:
             else:
                 rel_closed = state.copy()
                 u0 = hold_u
-            mp, out = self.plant(rel_closed, u0, t, soc, state)
+            mp, out = self.plant(rel_closed, u0, t, soc, state, repair=not bool(fallback))
+            if rank_value(0.0, mp) >= 1e6:
+                fallback = 1
+                u0 = np.zeros(n.bess_bus.size)
+                mp, out = self.plant(state.copy(), u0, t, soc, state, repair=False)
+                hold_u = u0.copy()
+            if rank_value(0.0, mp) >= 1e6:
+                raise RuntimeError(f"No admissible released action: seed={self.seed}, t={t}, metrics={mp.tolist()}")
             # switching bookkeeping (executed operations)
             ops = 0; rev = 0
             for e in range(n.nl):
@@ -234,6 +241,10 @@ class Episode:
                 demand_kwh=tr.pd[t].sum() * cfg["dt_h"], crit_demand_kwh=pdem_c * cfg["dt_h"],
                 crit_deficit_frac=(pdem_c - served_c) / pdem_c if pdem_c > 0 else 0.0,
                 loss_kwh=mp[core.M_LOSS], vdi=mp[core.M_VDI], vmin=mp[core.M_VMIN], max_loading=mp[core.M_IMAXR],
+                vmax=mp[core.M_VMAX], final_nonconvergence=int(mp[core.M_FINAL_NONCONV]),
+                voltage_violations=int(mp[core.M_VVIOL]), bess_violations=int(mp[core.M_BESSVIOL]),
+                reserve_step_violations=int(mp[core.M_RESERVE_STEP]), terminal_deficit_kwh=mp[core.M_TERM],
+                release_gate_pass=True,
                 overloads=int(mp[core.M_OVERLOAD]), shed_events=int(mp[core.M_NSHED]), soc_violations=int(mp[core.M_SOCVIOL]),
                 switch_ops=ops, reversals=rev, served_buses=int(out["served"].sum()),
                 soc_mean=float(out["soc"].mean()), soc_min=float(out["soc"].min()),
